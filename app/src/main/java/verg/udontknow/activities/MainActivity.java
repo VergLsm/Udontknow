@@ -4,13 +4,13 @@ import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -62,24 +62,24 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         assert fab != null;
         fab.setOnClickListener(this);
 
-        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, mDrawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         mDrawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         assert navigationView != null;
         navigationView.setNavigationItemSelectedListener(this);
 
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.my_swipeRefreshLayout);
+        mSwipeRefreshLayout = findViewById(R.id.my_swipeRefreshLayout);
         assert mSwipeRefreshLayout != null;
         mSwipeRefreshLayout.setEnabled(false);
 
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity
         mAdapter.setOnItemClickListener(this);
         mAdapter.setOnItemLongClickListener(this);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
+        mRecyclerView = findViewById(R.id.my_recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mAdapter);
 
@@ -151,7 +151,8 @@ public class MainActivity extends AppCompatActivity
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
         MenuItem menuItemSearchView = menu.findItem(R.id.menu_search);
-        SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(menuItemSearchView);
+//        SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(menuItemSearchView);
+        SearchView mSearchView = (SearchView) menuItemSearchView.getActionView();
         mSearchView.setOnQueryTextListener(this);
 
         return true;
@@ -177,7 +178,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         switch (id) {
@@ -258,7 +259,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     protected void check4updates() {
-        String url = "https://raw.githubusercontent.com/VergLsm/Release/Udontknow/version";
+        String url = "https://raw.githubusercontent.com/VergLsm/Udontknow/master/app/version.json";
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url, null, this, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -303,7 +304,9 @@ public class MainActivity extends AppCompatActivity
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
         request.setMimeType("application/application/vnd.android.package-archive");
-        downloadManager.enqueue(request);
+        if (downloadManager != null) {
+            downloadManager.enqueue(request);
+        }
         Snackbar.make(mRecyclerView, R.string.start_download, Snackbar.LENGTH_SHORT).show();
 
     }
