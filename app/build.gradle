@@ -1,30 +1,22 @@
 apply plugin: 'com.android.application'
 
-def keystoreFilepath = ''
-def keystorePSW = ''
-def keystoreAlias = ''
-def keystoreAliasPSW = ''
-// default keystore file, PLZ config file path in local.properties
-def keyfile = file('s.keystore.temp')
+// Create a variable called keystorePropertiesFile, and initialize it to your
+// keystore.properties file, in the rootProject folder.
+def keystorePropertiesFile = file("keystore.properties")
 
-Properties properties = new Properties()
-properties.load(file('local.properties').newDataInputStream())
-keystoreFilepath = properties.getProperty("keystore.path")
+// Initialize a new Properties() object called keystoreProperties.
+def keystoreProperties = new Properties()
 
-if (keystoreFilepath) {
-    keystorePSW = properties.getProperty("keystore.password")
-    keystoreAlias = properties.getProperty("keystore.alias")
-    keystoreAliasPSW = properties.getProperty("keystore.alias_password")
-    keyfile = file(keystoreFilepath)
-}
+// Load your keystore.properties file into the keystoreProperties object.
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
     signingConfigs {
         config {
-            storeFile keyfile
-            storePassword keystorePSW
-            keyAlias keystoreAlias
-            keyPassword keystoreAliasPSW
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
         }
     }
 
@@ -40,12 +32,7 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (keyfile.exists()) {
-                println("WITH -> buildTypes -> release: using jks key")
-                signingConfig signingConfigs.config
-            } else {
-                println("WITH -> buildTypes -> release: using default key")
-            }
+            signingConfig signingConfigs.config
         }
         debug {
             println("WITH -> buildTypes -> debug: using default key")
