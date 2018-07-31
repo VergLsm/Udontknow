@@ -195,6 +195,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    @NonNull
     @Override
     public Loader<List<AccountEntity>> onCreateLoader(int id, Bundle args) {
 
@@ -207,7 +208,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onLoadFinished(Loader<List<AccountEntity>> loader, List<AccountEntity> data) {
+    public void onLoadFinished(@NonNull Loader<List<AccountEntity>> loader, List<AccountEntity> data) {
         VergLog.v(TAG, "onLoadFinished()");
         if (data == null || data.isEmpty()) {
             Snackbar.make(mRecyclerView, "no database find.", Snackbar.LENGTH_LONG).show();
@@ -220,7 +221,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onLoaderReset(Loader<List<AccountEntity>> loader) {
+    public void onLoaderReset(@NonNull Loader<List<AccountEntity>> loader) {
         mAdapter.setModels(null);
     }
 
