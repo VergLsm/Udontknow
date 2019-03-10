@@ -14,4 +14,5 @@ public interface IProvider {
      */
     Uri CONTENT_URI = Uri.parse("content://" + PROVIDER_NAME + "/customers");
 
+    String PWD = "pwd";
 }

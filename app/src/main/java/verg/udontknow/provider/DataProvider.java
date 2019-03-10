@@ -5,10 +5,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 import verg.udontknow.R;
 
@@ -40,6 +41,7 @@ public class DataProvider extends ContentProvider {
     public boolean onCreate() {
         Context context = getContext();
         assert context != null;
+        SQLiteDatabase.loadLibs(context);
         mDBHelper = new DBHelper(getContext(), context.getString(R.string.app_name));
         return true;
     }
@@ -47,7 +49,7 @@ public class DataProvider extends ContentProvider {
     @Override
     public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         if (uriMatcher.match(uri) == CUSTOMERS) {
-            SQLiteDatabase db = mDBHelper.getReadableDatabase();
+            SQLiteDatabase db = mDBHelper.getReadableDatabase(uri.getQueryParameter(IProvider.PWD));
             return db.query(DBHelper.TABLENAME, projection, selection, selectionArgs, null, null, sortOrder);
         } else {
             return null;
@@ -62,7 +64,7 @@ public class DataProvider extends ContentProvider {
     @Override
     public Uri insert(@NonNull Uri uri, ContentValues values) {
         Log.d(TAG, "Provider->insert:" + values.get(IDB.ROWS_NAME[IDB.LABEL]));
-        SQLiteDatabase db = mDBHelper.getWritableDatabase();
+        SQLiteDatabase db = mDBHelper.getWritableDatabase(uri.getQueryParameter(IProvider.PWD));
         db.insert(DBHelper.TABLENAME, null, values);
         return null;
     }
@@ -70,14 +72,14 @@ public class DataProvider extends ContentProvider {
     @Override
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
         Log.d(TAG, "Provider->delete:" + selectionArgs[0]);
-        SQLiteDatabase db = mDBHelper.getWritableDatabase();
+        SQLiteDatabase db = mDBHelper.getWritableDatabase(uri.getQueryParameter(IProvider.PWD));
         return db.delete(DBHelper.TABLENAME, selection, selectionArgs);
     }
 
     @Override
     public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         Log.d(TAG, "Provider->update:" + values.get(IDB.ROWS_NAME[IDB.LABEL]));
-        SQLiteDatabase db = mDBHelper.getWritableDatabase();
+        SQLiteDatabase db = mDBHelper.getWritableDatabase(uri.getQueryParameter(IProvider.PWD));
         return db.update(DBHelper.TABLENAME, values, selection, selectionArgs);
     }
 }

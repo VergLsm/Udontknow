@@ -8,15 +8,10 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -31,32 +26,24 @@ import com.umeng.analytics.MobclickAgent;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.List;
-
 import verg.lib.VergLog;
 import verg.lib.VolleyRequestQueue;
 import verg.udontknow.R;
-import verg.udontknow.activities.main.AccountListLoader;
-import verg.udontknow.activities.main.NewAdapter;
-import verg.udontknow.entity.AccountEntity;
-import verg.udontknow.provider.IDB;
-import verg.udontknow.provider.IProvider;
 
 import static verg.lib.AppInfos.getVersionCode;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        LoaderManager.LoaderCallbacks<List<AccountEntity>>,
-        View.OnClickListener,
-        SearchView.OnQueryTextListener,
-        NewAdapter.ItemClickListener, NewAdapter.ItemLongClickListener, Response.Listener<JSONObject> {
+        LoginFragment.OnFragmentInteractionListener,
+        MainFragment.OnFragmentInteractionListener,
+        Response.Listener<JSONObject> {
 
     private final String TAG = this.getClass().getName();
-    public static final int REQUESTCODE = 12300;
-    private RecyclerView mRecyclerView;
-    private NewAdapter mAdapter;
-    private SwipeRefreshLayout mSwipeRefreshLayout;
+
     private DrawerLayout mDrawer;
+    private View mView;
+    private FloatingActionButton fab;
+    private SearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +52,7 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        assert fab != null;
-        fab.setOnClickListener(this);
+        fab = findViewById(R.id.fab);
 
         mDrawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -79,26 +64,12 @@ public class MainActivity extends AppCompatActivity
         assert navigationView != null;
         navigationView.setNavigationItemSelectedListener(this);
 
-        mSwipeRefreshLayout = findViewById(R.id.my_swipeRefreshLayout);
-        assert mSwipeRefreshLayout != null;
-        mSwipeRefreshLayout.setEnabled(false);
-
-        mAdapter = new NewAdapter(null);
-        mAdapter.setOnItemClickListener(this);
-        mAdapter.setOnItemLongClickListener(this);
-
-        mRecyclerView = findViewById(R.id.my_recycler_view);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mRecyclerView.setAdapter(mAdapter);
-
-        mSwipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                getSupportLoaderManager().initLoader(0, null, MainActivity.this);
-                mSwipeRefreshLayout.setRefreshing(true);
-            }
-        });
         MobclickAgent.setDebugMode(true);
+
+        mView = findViewById(R.id.main_container);
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.main_container, LoginFragment.newInstance(null, null)).commit();
     }
 
     @Override
@@ -135,7 +106,7 @@ public class MainActivity extends AppCompatActivity
         if (mDrawer.isDrawerOpen(GravityCompat.START)) {
             mDrawer.closeDrawer(GravityCompat.START);
         } else {
-            Snackbar.make(mRecyclerView, "确认退出？", Snackbar.LENGTH_LONG)
+            Snackbar.make(mView, "确认退出？", Snackbar.LENGTH_LONG)
                     .setAction("是的", new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -152,28 +123,8 @@ public class MainActivity extends AppCompatActivity
 
         MenuItem menuItemSearchView = menu.findItem(R.id.menu_search);
 //        SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(menuItemSearchView);
-        SearchView mSearchView = (SearchView) menuItemSearchView.getActionView();
-        mSearchView.setOnQueryTextListener(this);
+        searchView = (SearchView) menuItemSearchView.getActionView();
 
-        return true;
-    }
-
-    @Override
-    public boolean onQueryTextSubmit(String query) {
-        // Don't care about this.
-        return true;
-    }
-
-    @Override
-    public boolean onQueryTextChange(String newText) {
-        // Called when the action bar search text has changed.  Since this
-        // is a simple array adapter, we can just have it do the filtering.
-//        Log.d(TAG, newText);
-//        mCurFilter = newText;
-//        final List<AccountEntity> filteredModelList = filter(mModels, newText);
-//        mAdapter.animateTo(filteredModelList);
-        mAdapter.setFilter(newText);
-        mRecyclerView.scrollToPosition(0);
         return true;
     }
 
@@ -193,70 +144,6 @@ public class MainActivity extends AppCompatActivity
         }
         mDrawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    @NonNull
-    @Override
-    public Loader<List<AccountEntity>> onCreateLoader(int id, Bundle args) {
-
-        Uri uri = IProvider.CONTENT_URI;
-
-        // This is the select criteria
-
-        return new AccountListLoader(this, uri,
-                IDB.ROWS_NAME, null, null, IDB.ROWS_NAME[IDB.DBID] + " DESC");
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<List<AccountEntity>> loader, List<AccountEntity> data) {
-        VergLog.v(TAG, "onLoadFinished()");
-        if (data == null || data.isEmpty()) {
-            Snackbar.make(mRecyclerView, "no database find.", Snackbar.LENGTH_LONG).show();
-        } else {
-            mAdapter.setModels(data);
-        }
-        if (mSwipeRefreshLayout.isRefreshing()) {
-            mSwipeRefreshLayout.setRefreshing(false);
-        }
-    }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<List<AccountEntity>> loader) {
-        mAdapter.setModels(null);
-    }
-
-    @Override
-    public void onItemClick(View view, int position) {
-        Intent intent = new Intent(this, DetailActivity.class);
-        intent.putExtra(AccountEntity.TAG, mAdapter.getItemEntity(position));
-        startActivity(intent);
-    }
-
-    @Override
-    public void onClick(View v) {
-        startActivityForResult(new Intent(this, EditorActivity.class), REQUESTCODE);
-    }
-
-    @Override
-    public void onItemLongClick(View view, final int position) {
-        VergLog.v(TAG, "onItemLongClick()");
-        Snackbar.make(view, "是否删除？", Snackbar.LENGTH_LONG)
-                .setAction("是的", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        // Defines selection criteria for the rows you want to delete
-                        String mSelectionClause = IDB.ROWS_NAME[IDB.DBID] + "= ?";
-                        String[] mSelectionArgs = {String.valueOf(mAdapter.getItemEntity(position)._id)};
-
-                        // Defines a variable to contain the number of rows deleted
-                        int rowsDeleted = getContentResolver().delete(
-                                IProvider.CONTENT_URI,
-                                mSelectionClause,
-                                mSelectionArgs);
-                        VergLog.v(TAG, "rowsDeleted:" + rowsDeleted);
-                        mAdapter.remove(position);
-                    }
-                }).show();
     }
 
     protected void check4updates() {
@@ -285,7 +172,7 @@ public class MainActivity extends AppCompatActivity
         VergLog.d(TAG, url);
         if (getVersionCode(this) < newVersion) {
             final String finalUrl = url;
-            Snackbar.make(mRecyclerView, R.string.had_new_version, Snackbar.LENGTH_LONG).setAction(R.string.update, new View.OnClickListener() {
+            Snackbar.make(mView, R.string.had_new_version, Snackbar.LENGTH_LONG).setAction(R.string.update, new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     VergLog.v(TAG, getString(R.string.update));
@@ -293,7 +180,7 @@ public class MainActivity extends AppCompatActivity
                 }
             }).show();
         } else {
-            Snackbar.make(mRecyclerView, R.string.no_new_version, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(mView, R.string.no_new_version, Snackbar.LENGTH_LONG).show();
         }
     }
 
@@ -308,7 +195,25 @@ public class MainActivity extends AppCompatActivity
         if (downloadManager != null) {
             downloadManager.enqueue(request);
         }
-        Snackbar.make(mRecyclerView, R.string.start_download, Snackbar.LENGTH_SHORT).show();
+        Snackbar.make(mView, R.string.start_download, Snackbar.LENGTH_SHORT).show();
 
+    }
+
+    @Override
+    public void onFragmentInteraction(String strUri) {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.main_container, MainFragment.newInstance(strUri, null)).commit();
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+    }
+
+    public FloatingActionButton getFab() {
+        return fab;
+    }
+
+    public SearchView getSearchView() {
+        return searchView;
     }
 }

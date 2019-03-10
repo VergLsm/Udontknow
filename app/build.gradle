@@ -50,5 +50,9 @@ dependencies {
     implementation 'com.android.support:cardview-v7:27.1.1'
     implementation 'com.android.volley:volley:1.1.0'
     implementation 'com.umeng.analytics:umeng-analytics:5.4.1'
+    // https://mvnrepository.com/artifact/net.zetetic/android-database-sqlcipher
+    implementation 'net.zetetic:android-database-sqlcipher:4.0.1'
     implementation project(':verglib')
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }

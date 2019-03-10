@@ -33,4 +33,8 @@
     <string name="update">Update</string>
     <string name="start_download">Start download</string>
 
+    <string name="text_input_password">Input password:</string>
+    <string name="btn_confirm">Confirm</string>
+    <string name="wrong_password">wrong password</string>
+
 </resources>
